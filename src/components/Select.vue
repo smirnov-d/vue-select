@@ -1,5 +1,5 @@
-<style lang="scss">
-@import '../scss/vue-select.scss';
+<style>
+@import '../css/vue-select.css';
 </style>
 
 <template>
@@ -118,9 +118,9 @@
           </slot>
         </li>
         <li v-if="filteredOptions.length === 0" class="vs__no-options">
-          <slot name="no-options" v-bind="scope.noOptions"
-            >Sorry, no matching options.</slot
-          >
+          <slot name="no-options" v-bind="scope.noOptions">
+            Sorry, no matching options.
+          </slot>
         </li>
         <slot name="list-footer" v-bind="scope.listFooter" />
       </ul>
@@ -136,13 +136,13 @@
 </template>
 
 <script>
-import pointerScroll from '../mixins/pointerScroll'
-import typeAheadPointer from '../mixins/typeAheadPointer'
-import ajax from '../mixins/ajax'
-import childComponents from './childComponents'
-import appendToBody from '../directives/appendToBody'
-import sortAndStringify from '../utility/sortAndStringify'
-import uniqueId from '../utility/uniqueId'
+import pointerScroll from '../mixins/pointerScroll.js'
+import typeAheadPointer from '../mixins/typeAheadPointer.js'
+import ajax from '../mixins/ajax.js'
+import childComponents from './childComponents.js'
+import appendToBody from '../directives/appendToBody.js'
+import sortAndStringify from '../utility/sortAndStringify.js'
+import uniqueId from '../utility/uniqueId.js'
 
 /**
  * @name VueSelect
@@ -571,7 +571,10 @@ export default {
      */
     selectOnKeyCodes: {
       type: Array,
-      default: () => [13],
+      default: () => [
+        // enter
+        13,
+      ],
     },
 
     /**
@@ -702,7 +705,7 @@ export default {
         value = this.$data._value
       }
 
-      if (value) {
+      if (value !== undefined && value !== null && value !== '') {
         return [].concat(value)
       }
 
@@ -768,6 +771,7 @@ export default {
             compositionstart: () => (this.isComposing = true),
             compositionend: () => (this.isComposing = false),
             keydown: this.onSearchKeyDown,
+            keypress: this.onSearchKeyPress,
             blur: this.onSearchBlur,
             focus: this.onSearchFocus,
             input: (e) => (this.search = e.target.value),
@@ -923,7 +927,7 @@ export default {
         this.clearSelection()
       }
 
-      if (this.value && this.isTrackingValues) {
+      if (this.isValueEmpty && this.isTrackingValues) {
         this.setInternalValueFromOptions(this.value)
       }
     },
@@ -952,6 +956,12 @@ export default {
 
     open(isOpen) {
       this.$emit(isOpen ? 'open' : 'close')
+    },
+
+    search(search) {
+      if (search.length) {
+        this.open = true
+      }
     },
   },
 
@@ -1035,11 +1045,13 @@ export default {
     onAfterSelect(option) {
       if (this.closeOnSelect) {
         this.open = !this.open
-        this.searchEl.blur()
       }
 
       if (this.clearSearchOnSelect) {
         this.search = ''
+      }
+      if (this.noDrop && this.multiple) {
+        this.$nextTick(() => this.$refs.search.focus())
       }
     },
 
@@ -1237,7 +1249,7 @@ export default {
      */
     onEscape() {
       if (!this.search.length) {
-        this.searchEl.blur()
+        this.open = false
       } else {
         this.search = ''
       }
@@ -1299,7 +1311,7 @@ export default {
 
     /**
      * Search <input> KeyBoardEvent handler.
-     * @param e {KeyboardEvent}
+     * @param {KeyboardEvent} e
      * @return {Function}
      */
     onSearchKeyDown(e) {
@@ -1318,11 +1330,19 @@ export default {
         //  up.prevent
         38: (e) => {
           e.preventDefault()
+          if (!this.open) {
+            this.open = true
+            return
+          }
           return this.typeAheadUp()
         },
         //  down.prevent
         40: (e) => {
           e.preventDefault()
+          if (!this.open) {
+            this.open = true
+            return
+          }
           return this.typeAheadDown()
         },
       }
@@ -1335,6 +1355,17 @@ export default {
 
       if (typeof handlers[e.keyCode] === 'function') {
         return handlers[e.keyCode](e)
+      }
+    },
+
+    /**
+     * @todo: Probably want to add a mapKeyPress method just like we have for keydown.
+     * @param {KeyboardEvent} e
+     */
+    onSearchKeyPress(e) {
+      if (!this.open && e.keyCode === 32) {
+        e.preventDefault()
+        this.open = true
       }
     },
   },

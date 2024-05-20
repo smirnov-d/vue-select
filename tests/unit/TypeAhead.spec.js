@@ -20,6 +20,7 @@ describe('Moving the Typeahead Pointer', () => {
   it('should move the pointer visually up the list on up arrow keyUp', () => {
     const Select = mountDefault()
 
+    Select.vm.open = true
     Select.vm.typeAheadPointer = 1
 
     Select.findComponent({ ref: 'search' }).trigger('keydown.up')
@@ -30,6 +31,7 @@ describe('Moving the Typeahead Pointer', () => {
   it('should move the pointer visually down the list on down arrow keyUp', () => {
     const Select = mountDefault()
 
+    Select.vm.open = true
     Select.vm.typeAheadPointer = 1
 
     Select.findComponent({ ref: 'search' }).trigger('keydown.down')
@@ -44,4 +46,57 @@ describe('Moving the Typeahead Pointer', () => {
     Select.vm.typeAheadDown()
     expect(Select.vm.typeAheadPointer).toEqual(2)
   })
+
+  it('will set the pointer to the selected option when opening', async () => {
+    const Select = shallowMount(VueSelect, {
+      propsData: {
+        value: 'three',
+        options: ['one', 'two', 'three'],
+      },
+    })
+
+    Select.findComponent({ ref: 'search' }).trigger('focus')
+    await Select.vm.$nextTick()
+
+    expect(Select.vm.typeAheadPointer).toEqual(2)
+  })
+
+  it('will set the pointer to the reduced selected option when opening', async () => {
+    const Select = shallowMount(VueSelect, {
+      propsData: {
+        value: 3,
+        reduce: ({ value }) => value,
+        options: [
+          { label: 'one', value: 1 },
+          { label: 'two', value: 2 },
+          { label: 'three', value: 3 },
+        ],
+      },
+    })
+
+    Select.findComponent({ ref: 'search' }).trigger('focus')
+    await Select.vm.$nextTick()
+
+    expect(Select.vm.typeAheadPointer).toEqual(2)
+  })
+})
+
+it('should not move the pointer visually up the list on up arrow keyUp when dropdown is not open', () => {
+  const Select = mountDefault()
+
+  Select.vm.typeAheadPointer = 1
+
+  Select.findComponent({ ref: 'search' }).trigger('keydown.up')
+
+  expect(Select.vm.typeAheadPointer).toEqual(1)
+})
+
+it('should not move the pointer visually down the list on down arrow keyUp when dropdown is not open', () => {
+  const Select = mountDefault()
+
+  Select.vm.typeAheadPointer = 1
+
+  Select.findComponent({ ref: 'search' }).trigger('keydown.down')
+
+  expect(Select.vm.typeAheadPointer).toEqual(1)
 })
