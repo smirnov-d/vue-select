@@ -947,7 +947,7 @@ export default {
         this.clearSelection()
       }
 
-      if (this.modelValue && this.isTrackingValues) {
+      if (!this.isValueEmpty && this.isTrackingValues) {
         this.setInternalValueFromOptions(this.modelValue)
       }
     },
